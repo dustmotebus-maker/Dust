@@ -145,3 +145,7 @@ canvas#game {
     display: flex;
   }
 }
+
+body.has-touch #touch-controls {
+  display: flex;
+}

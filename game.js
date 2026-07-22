@@ -258,6 +258,10 @@
     }
   });
 
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    document.body.classList.add('has-touch');
+  }
+
   function bindTouch(id, dir) {
     const el = document.getElementById(id);
     const handler = (e) => { e.preventDefault(); setDirection(dir); };
