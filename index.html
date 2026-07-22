@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pac-Man</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <div id="hud">
+      <div class="hud-item">SCORE<br><span id="score">0</span></div>
+      <div class="hud-item">HIGH SCORE<br><span id="highscore">0</span></div>
+      <div class="hud-item">LEVEL<br><span id="level">1</span></div>
+      <div class="hud-item">LIVES<br><span id="lives">3</span></div>
+    </div>
+
+    <div id="canvas-wrap">
+      <canvas id="game" width="475" height="525"></canvas>
+
+      <div id="overlay">
+        <div id="overlay-content">
+          <h1>PAC-MAN</h1>
+          <p id="overlay-message">Arrow keys / WASD to move.<br>Eat all dots. Avoid ghosts.<br>Power pellets let you eat ghosts!</p>
+          <button id="start-btn">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="touch-controls">
+      <button id="btn-up" class="touch-btn" aria-label="Up">&#9650;</button>
+      <div class="touch-row">
+        <button id="btn-left" class="touch-btn" aria-label="Left">&#9664;</button>
+        <button id="btn-down" class="touch-btn" aria-label="Down">&#9660;</button>
+        <button id="btn-right" class="touch-btn" aria-label="Right">&#9654;</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
