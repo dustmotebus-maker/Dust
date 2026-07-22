@@ -127,6 +127,65 @@
   const HIGH_SCORE_KEY = 'pacman-high-score';
 
   // ---------------------------------------------------------------------
+  // Sound (synthesized via Web Audio API - no audio files to load)
+  // ---------------------------------------------------------------------
+  let audioCtx = null;
+  // iOS only allows creating/resuming an AudioContext from inside a user
+  // gesture handler, so this is called from click/touchstart/keydown.
+  function unlockAudio() {
+    if (!audioCtx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) audioCtx = new AudioCtx();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playTone(freq, duration, delay, type, volume) {
+    if (!audioCtx) return;
+    const t0 = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(volume, t0);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration);
+  }
+
+  function playSequence(notes, type, volume) {
+    let t = 0;
+    for (const [freq, duration] of notes) {
+      playTone(freq, duration, t, type, volume);
+      t += duration;
+    }
+  }
+
+  let chompToggle = false;
+  const sound = {
+    chomp() {
+      chompToggle = !chompToggle;
+      playTone(chompToggle ? 240 : 200, 0.06, 0, 'square', 0.08);
+    },
+    power() {
+      playSequence([[150, 0.1], [220, 0.1], [300, 0.15]], 'sawtooth', 0.12);
+    },
+    eatGhost() {
+      playSequence([[400, 0.06], [600, 0.06], [900, 0.1]], 'square', 0.12);
+    },
+    death() {
+      playSequence([[500, 0.15], [400, 0.15], [300, 0.15], [200, 0.15], [120, 0.3]], 'sawtooth', 0.15);
+    },
+    levelComplete() {
+      playSequence([[440, 0.1], [554, 0.1], [659, 0.1], [880, 0.25]], 'square', 0.12);
+    },
+    start() {
+      playSequence([[392, 0.1], [523, 0.1], [659, 0.1], [784, 0.2]], 'square', 0.12);
+    },
+  };
+
+  // ---------------------------------------------------------------------
   // Game state
   // ---------------------------------------------------------------------
   let grid, pelletsRemaining;
@@ -248,6 +307,7 @@
   }
 
   window.addEventListener('keydown', (e) => {
+    unlockAudio();
     const dir = KEY_MAP[e.code];
     if (dir) {
       e.preventDefault();
@@ -264,7 +324,7 @@
 
   function bindTouch(id, dir) {
     const el = document.getElementById(id);
-    const handler = (e) => { e.preventDefault(); setDirection(dir); };
+    const handler = (e) => { e.preventDefault(); unlockAudio(); setDirection(dir); };
     el.addEventListener('touchstart', handler, { passive: false });
     el.addEventListener('mousedown', handler);
   }
@@ -274,6 +334,8 @@
   bindTouch('btn-right', 'right');
 
   startBtn.addEventListener('click', () => {
+    unlockAudio();
+    sound.start();
     overlay.classList.add('hidden');
     newGame();
   });
@@ -484,8 +546,10 @@
         pelletsRemaining -= 1;
         if (cell === PELLET) {
           score += 10;
+          sound.chomp();
         } else {
           score += 50;
+          sound.power();
           frightenedTimer = Math.max(2, 7 - (level - 1) * 0.4);
           ghostEatCombo = 0;
           for (const g of ghosts) {
@@ -500,6 +564,7 @@
         if (pelletsRemaining <= 0) {
           state = 'levelComplete';
           stateTimer = 2;
+          sound.levelComplete();
           return;
         }
       }
@@ -515,6 +580,7 @@
           score += 200 * Math.pow(2, Math.min(ghostEatCombo - 1, 3));
           g.mode = 'eaten';
           updateHud();
+          sound.eatGhost();
         } else if (g.mode === 'eaten') {
           // no effect
         } else {
@@ -528,6 +594,7 @@
   function loseLife() {
     lives -= 1;
     updateHud();
+    sound.death();
     if (lives <= 0) {
       state = 'gameOver';
       stateTimer = 0;
